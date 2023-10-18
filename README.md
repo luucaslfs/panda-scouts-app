@@ -9,6 +9,9 @@ pip install -r requirements.txt
 ```
 
 ## Como rodar o projeto
+
+Antes, insira a chave da API em ".env.example" e renomeie para ".env"
+<br>
 Para rodar o projeto em modo desenvolvedor (atualiza a cada CTRL+S), rode o seguinte comando:
 ```bash
 uvicorn app.main:app --reload
