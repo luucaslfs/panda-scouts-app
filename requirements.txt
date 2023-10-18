@@ -1,1 +1,4 @@
-"fastapi[all]"
+fastapi
+pymongo
+apscheduler
+pytz
