@@ -74,14 +74,20 @@ async def update_standings_data(league_id: int, season: int):
 
 @app.get("/today-quartile-matches/{league_id}/{season}")
 async def get_today_quartile_matches(league_id: int, season: int):
+    """
+    Obtém os jogos do dia de uma liga que correspondem aos critérios do quartil
+    com base nas classificações das equipes.
+
+    Args:
+        league_id (int): O ID da liga.
+        season (int): O ano da temporada.
+
+    Returns:
+        dict: Um dicionário contendo a lista de jogos que atendem aos critérios.
+    """
     try:
-        # Obter dados de classificação da liga usando a função do services.py
         standings_data = services.fetch_standings_data(league_id, season)
-
-        # Obter os jogos do dia da coleção MongoDB usando a função do services.py
         today_matches = services.get_today_matches_from_db(league_id)
-
-        # Filtrar jogos de quartil com base nas classificações das equipes
         quartile_matches = services.filter_quartile_matches(
             today_matches, standings_data)
 
@@ -92,8 +98,13 @@ async def get_today_quartile_matches(league_id: int, season: int):
 
 @app.post("/update-today-matches-for-all-leagues")
 async def update_today_matches_for_all_leagues_endpoint():
+    """
+    Inicia a atualização dos jogos do dia para todas as ligas.
+
+    Returns:
+        dict: Um dicionário com uma mensagem indicando o resultado da atualização.
+    """
     try:
-        # Chame a função para atualizar os jogos do dia para todas as ligas
         services.update_today_matches_for_all_leagues()
 
         return {"message": "Atualização dos jogos do dia para todas as ligas concluída com sucesso"}
