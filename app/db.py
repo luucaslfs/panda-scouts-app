@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from os import getenv
 from dotenv import load_dotenv
+import datetime
 
 load_dotenv()
 
@@ -9,9 +10,9 @@ class MongoDB:
     def __init__(self):
         self.client = MongoClient(getenv('MONGODB_URI'))
         self.db = self.client[getenv('DB_NAME')]
+        self.collection = self.db[getenv('COLLECTION_NAME')]
 
     def update_league_data(self, league_id: int, season: int, data: dict):
-        self.collection = self.db["standings"]
         query = {"league_info.id": league_id, "league_info.season": season}
         new_data = {"$set": data}
         self.collection.update_one(query, new_data, upsert=True)
@@ -28,7 +29,7 @@ class MongoDB:
         - dict: Dados de classificação da liga.
         """
         query = {"league_info.id": league_id, "league_info.season": season}
-        self.collection = self.db["standings"]
+
         result = self.collection.find_one(query)
 
         if result:
@@ -37,8 +38,43 @@ class MongoDB:
             raise ValueError(
                 f"No standings data found for league_id {league_id} and season {season}.")
 
-    # Adicione aqui outras funções relacionadas a operações no banco de dados, se necessário.
-    # Por exemplo, funções para consultar dados, deletar documentos, etc.
+    def update_today_matches(self, league_id: int, season: int, today_matches: list):
+        """
+        Atualiza os jogos do dia na coleção MongoDB para uma liga específica.
+
+        Args:
+        - league_id (int): ID da liga.
+        - season (int): Temporada.
+        - today_matches (list): Lista de informações completas dos jogos do dia.
+
+        Esta função atualiza os jogos do dia na coleção MongoDB para a liga e temporada especificadas.
+        """
+        query = {"league_info.id": league_id, "league_info.season": season}
+        new_data = {"$set": {"today_matches": today_matches}}
+
+        self.collection.update_one(query, new_data)
+
+    def get_today_matches(self, league_id: int, season: int):
+        """
+        Obtém os jogos do dia para uma liga específica do banco de dados MongoDB.
+
+        Args:
+        - league_id (int): ID da liga.
+        - season (int): Temporada.
+
+        Returns:
+        - list: Uma lista de informações completas dos jogos do dia.
+        """
+        query = {
+            "league_info.id": league_id,
+            "league_info.season": season,
+            "today_matches": {"$exists": True, "$not": {"$size": 0}}
+        }
+
+        projection = {"_id": 0, "today_matches": 1}
+        matches = self.collection.find(query, projection)
+
+        return list(matches)
 
 # Usando a classe no seu código
 # db_instance = MongoDB()
