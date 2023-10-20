@@ -124,31 +124,47 @@ def update_today_matches_in_db(league_id: int, season: int):
     Esta função faz uma chamada à API externa para obter os jogos do dia e atualiza
     o campo "today_matches" na coleção do MongoDB para a liga especificada.
     """
-    conn = http.client.HTTPSConnection("api-football-v1.p.rapidapi.com")
+    try:
+        conn = http.client.HTTPSConnection("api-football-v1.p.rapidapi.com")
 
-    headers = {
-        'X-RapidAPI-Key': API_FOOTBALL_KEY,
-        'X-RapidAPI-Host': "api-football-v1.p.rapidapi.com"
-    }
+        headers = {
+            'X-RapidAPI-Key': API_FOOTBALL_KEY,
+            'X-RapidAPI-Host': "api-football-v1.p.rapidapi.com"
+        }
 
-    today = datetime.date.today().isoformat()
-    timezone = "America/Sao_Paulo"
-    status = "NS"
+        # Obtém a data atual no formato YYYY-MM-DD
+        today = datetime.date.today().isoformat()
 
-    # Faz a consulta para obter os jogos do dia para a liga e temporada especificadas
-    conn.request(
-        "GET", f"/v3/fixtures?date={today}&league={league_id}&season={season}&timezone={timezone}&status={status}", headers=headers)
+        # Define o fuso horário para "America/Sao_Paulo"
+        timezone = "America/Sao_Paulo"
+        status = "NS"
 
-    res = conn.getresponse()
-    data = res.read()
+        # Faz a consulta para obter os jogos do dia para a liga e temporada especificadas
+        conn.request(
+            "GET", f"/v3/fixtures?date={today}&league={league_id}&season={season}&timezone={timezone}&status={status}", headers=headers)
 
-    fixtures_data = json.loads(data.decode("utf-8"))
+        res = conn.getresponse()
+        data = res.read()
 
-    # Obtém os IDs dos jogos do dia
-    today_matches = fixtures_data.get("response", [])
+        fixtures_data = json.loads(data.decode("utf-8"))
 
-    # Atualiza o campo "today_matches" na coleção MongoDB para a liga especificada
-    db_instance.update_today_matches(league_id, season, today_matches)
+        # Obtém os jogos do dia
+        today_matches = fixtures_data.get("response", [])
+
+        # Extrai apenas os campos "fixture" e "teams"
+        extracted_matches = []
+        for match in today_matches:
+            extracted_match = {
+                "fixture": match.get("fixture", {}),
+                "teams": match.get("teams", {})
+            }
+            extracted_matches.append(extracted_match)
+
+        # Atualiza o campo "today_matches" na coleção MongoDB para a liga especificada
+        db_instance.update_today_matches(league_id, season, extracted_matches)
+
+    except Exception as e:
+        print(f"Erro ao atualizar jogos do dia: {str(e)}")
 
 
 def update_today_matches_for_all_leagues():
