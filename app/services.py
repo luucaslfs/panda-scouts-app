@@ -197,3 +197,20 @@ def get_today_matches_from_db(league_id: int, season: int):
     """
     # Chama o método do banco de dados para obter os jogos do dia
     return db_instance.get_today_matches(league_id, season)
+
+
+def get_team_statistics(league_id: int, season: int, team_id: int):
+    conn = http.client.HTTPSConnection("api-football-v1.p.rapidapi.com")
+
+    headers = {
+        'X-RapidAPI-Key': API_FOOTBALL_KEY,
+        'X-RapidAPI-Host': "api-football-v1.p.rapidapi.com"
+    }
+
+    endpoint = f"/v3/teams/statistics?league={league_id}&season={season}&team={team_id}"
+    conn.request("GET", endpoint, headers=headers)
+
+    res = conn.getresponse()
+    data = res.read()
+
+    return data.decode("utf-8")
