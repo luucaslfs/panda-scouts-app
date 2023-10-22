@@ -76,6 +76,17 @@ class MongoDB:
 
         return list(matches)
 
+    def update_team_statistics(self, league_id: int, season: int, team_id: int, team_stats: dict):
+        query = {"league_info.id": league_id, "league_info.season": season}
+        update_query = {
+            "$set": {
+                # Use o ID do time como chave no campo "team_stats"
+                f"team_stats.{team_id}": team_stats
+            }
+        }
+        self.collection.update_one(query, update_query)
+
+
 # Usando a classe no seu código
 # db_instance = MongoDB()
 # db_instance.update_league_data(39, 2023, data)

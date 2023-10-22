@@ -214,3 +214,14 @@ def get_team_statistics(league_id: int, season: int, team_id: int):
     data = res.read()
 
     return data.decode("utf-8")
+
+
+def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
+    try:
+        raw_data = get_team_statistics(league_id, season, team_id)
+        data_json = json.loads(raw_data)
+        team_stats = data_json.get("response", {})
+        db_instance.update_team_statistics(
+            league_id, season, team_id, team_stats)
+    except Exception as e:
+        print(f"Erro ao atualizar estatísticas do time: {str(e)}")
