@@ -2,6 +2,7 @@ import json
 import http.client
 import db
 import datetime
+from ratelimit import global_rate_limited
 from os import getenv
 from dotenv import load_dotenv
 
@@ -11,6 +12,7 @@ API_FOOTBALL_KEY = getenv('API_FOOTBALL_KEY')
 db_instance = db.MongoDB()
 
 
+@global_rate_limited
 def get_football_data(league_id: int, season: int) -> str:
     conn = http.client.HTTPSConnection("api-football-v1.p.rapidapi.com")
 
@@ -113,6 +115,7 @@ def filter_quartile_matches(today_matches: list, standings_data: dict) -> list:
     return quartile_matches
 
 
+@global_rate_limited
 def update_today_matches_in_db(league_id: int, season: int):
     """
     Atualiza os jogos do dia no banco de dados MongoDB para uma liga específica.
@@ -205,6 +208,7 @@ def get_today_matches_from_db(league_id: int, season: int):
     return db_instance.get_today_matches(league_id, season)
 
 
+@global_rate_limited
 def get_team_statistics(league_id: int, season: int, team_id: int):
     conn = http.client.HTTPSConnection("api-football-v1.p.rapidapi.com")
 
@@ -226,8 +230,24 @@ def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
     try:
         raw_data = get_team_statistics(league_id, season, team_id)
         data_json = json.loads(raw_data)
-        team_stats = data_json.get("response", {})
+        team_stats_response = data_json.get("response", {})
+        if team_stats_response:
+            # Extrair os campos desejados
+            extracted_data = {
+                "form": team_stats_response.get("form", ""),
+                "total_goals_for": team_stats_response["goals"]["for"]["total"]["total"],
+                "total_goals_against": team_stats_response["goals"]["against"]["total"]["total"],
+                "avg_goals_per_game_home": team_stats_response["goals"]["for"]["average"]["home"],
+                "avg_goals_per_game_away": team_stats_response["goals"]["for"]["average"]["away"],
+                "win_percentage_home": (team_stats_response["fixtures"]["wins"]["home"] / team_stats_response["fixtures"]["played"]["home"]) * 100,
+                "win_percentage_away": (team_stats_response["fixtures"]["wins"]["away"] / team_stats_response["fixtures"]["played"]["away"]) * 100,
+                "avg_cards_per_game_home": sum(team_stats_response["cards"]["yellow"].values()) / team_stats_response["fixtures"]["played"]["home"],
+                "avg_cards_per_game_away": sum(team_stats_response["cards"]["yellow"].values()) / team_stats_response["fixtures"]["played"]["away"],
+                "clean_sheet_percentage_home": (team_stats_response["clean_sheet"]["home"] / team_stats_response["fixtures"]["played"]["home"]) * 100,
+                "clean_sheet_percentage_away": (team_stats_response["clean_sheet"]["away"] / team_stats_response["fixtures"]["played"]["away"]) * 100
+            }
+
         db_instance.update_team_statistics(
-            league_id, season, team_id, team_stats)
+            league_id, season, team_id, extracted_data)
     except Exception as e:
         print(f"Erro ao atualizar estatísticas do time: {str(e)}")
