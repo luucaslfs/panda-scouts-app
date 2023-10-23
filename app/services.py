@@ -163,6 +163,12 @@ def update_today_matches_in_db(league_id: int, season: int):
         # Atualiza o campo "today_matches" na coleção MongoDB para a liga especificada
         db_instance.update_today_matches(league_id, season, extracted_matches)
 
+        for match in extracted_matches:
+            home_team_id = match["teams"]["home"]["id"]
+            away_team_id = match["teams"]["away"]["id"]
+            update_team_statistics_in_db(league_id, season, home_team_id)
+            update_team_statistics_in_db(league_id, season, away_team_id)
+
     except Exception as e:
         print(f"Erro ao atualizar jogos do dia: {str(e)}")
 

@@ -80,7 +80,6 @@ class MongoDB:
         query = {"league_info.id": league_id, "league_info.season": season}
         update_query = {
             "$set": {
-                # Use o ID do time como chave no campo "team_stats"
                 f"team_stats.{team_id}": team_stats
             }
         }
