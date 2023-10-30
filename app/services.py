@@ -2,7 +2,7 @@ import json
 import http.client
 import db
 import datetime
-from ratelimit import global_rate_limited
+from ratelimit_mecanism import global_rate_limited
 from os import getenv
 from dotenv import load_dotenv
 
@@ -20,8 +20,6 @@ def get_football_data(league_id: int, season: int) -> str:
         'X-RapidAPI-Key': API_FOOTBALL_KEY,
         'X-RapidAPI-Host': "api-football-v1.p.rapidapi.com"
     }
-
-    print(headers)
 
     conn.request(
         "GET", f"/v3/standings?season={season}&league={league_id}", headers=headers)
@@ -230,21 +228,30 @@ def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
     try:
         raw_data = get_team_statistics(league_id, season, team_id)
         data_json = json.loads(raw_data)
-        team_stats_response = data_json.get("response", {})
-        if team_stats_response:
+        response_data = data_json.get("response", {})
+        if response_data:
+            home_matches_played = response_data["fixtures"]["played"]["home"]
+            away_matches_played = response_data["fixtures"]["played"]["away"]
+            yellow_cards = response_data["cards"]["yellow"]
+            avg_yellow_cards_home = sum(yellow_cards.values()) / \
+                home_matches_played if home_matches_played > 0 else 0
+            avg_yellow_cards_away = sum(yellow_cards.values()) / \
+                away_matches_played if away_matches_played > 0 else 0
+
+
             # Extrair os campos desejados
             extracted_data = {
-                "form": team_stats_response.get("form", ""),
-                "total_goals_for": team_stats_response["goals"]["for"]["total"]["total"],
-                "total_goals_against": team_stats_response["goals"]["against"]["total"]["total"],
-                "avg_goals_per_game_home": team_stats_response["goals"]["for"]["average"]["home"],
-                "avg_goals_per_game_away": team_stats_response["goals"]["for"]["average"]["away"],
-                "win_percentage_home": (team_stats_response["fixtures"]["wins"]["home"] / team_stats_response["fixtures"]["played"]["home"]) * 100,
-                "win_percentage_away": (team_stats_response["fixtures"]["wins"]["away"] / team_stats_response["fixtures"]["played"]["away"]) * 100,
-                "avg_cards_per_game_home": sum(team_stats_response["cards"]["yellow"].values()) / team_stats_response["fixtures"]["played"]["home"],
-                "avg_cards_per_game_away": sum(team_stats_response["cards"]["yellow"].values()) / team_stats_response["fixtures"]["played"]["away"],
-                "clean_sheet_percentage_home": (team_stats_response["clean_sheet"]["home"] / team_stats_response["fixtures"]["played"]["home"]) * 100,
-                "clean_sheet_percentage_away": (team_stats_response["clean_sheet"]["away"] / team_stats_response["fixtures"]["played"]["away"]) * 100
+                "form": response_data.get("form", ""),
+                "total_goals_for": response_data["goals"]["for"]["total"]["total"],
+                "total_goals_against": response_data["goals"]["against"]["total"]["total"],
+                "avg_goals_per_game_home": response_data["goals"]["for"]["average"]["home"],
+                "avg_goals_per_game_away": response_data["goals"]["for"]["average"]["away"],
+                "win_percentage_home": response_data["fixtures"]["wins"]["home"] / home_matches_played * 100,
+                "win_percentage_away": response_data["fixtures"]["wins"]["away"] / away_matches_played * 100,
+                "avg_cards_per_game_home": avg_yellow_cards_home,
+                "avg_cards_per_game_away": avg_yellow_cards_away,
+                "clean_sheet_percentage_home": response_data["clean_sheet"]["home"] / home_matches_played * 100,
+                "clean_sheet_percentage_away": response_data["clean_sheet"]["away"] / away_matches_played * 100
             }
 
         db_instance.update_team_statistics(
