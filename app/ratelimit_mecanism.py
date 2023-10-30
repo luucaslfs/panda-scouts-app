@@ -1,7 +1,7 @@
 from ratelimit import limits, RateLimitException, sleep_and_retry
 
 # Define o limite global de taxa (por exemplo, 1000 requisições por dia)
-GLOBAL_RATE_LIMIT = (1000, 24 * 60 * 60)  # 1000 requisições por dia
+GLOBAL_RATE_LIMIT = (100, 24 * 60 * 60)  # 1000 requisições por dia
 
 
 def global_rate_limited(func):
