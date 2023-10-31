@@ -313,9 +313,32 @@ def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
             home_matches_played = response_data["fixtures"]["played"]["home"]
             away_matches_played = response_data["fixtures"]["played"]["away"]
 
+            yellow_cards = response_data["cards"]["yellow"]
+            red_cards = response_data["cards"]["red"]
+            total_yellow_cards = 0
+            total_red_cards = 0
+
+            # Somar os cartões amarelos
+            for interval in yellow_cards.values():
+                total = interval.get("total", {})
+                if total:
+                    total_yellow_cards += int(total)
+
+            # Somar os cartões vermelhos
+            for interval in red_cards.values():
+                total = interval.get("total", {})
+                if total:
+                    total_red_cards += int(total)
+
+            total_matches_played = home_matches_played + away_matches_played
+
+            avg_yellow_cards = total_yellow_cards / total_matches_played
+            avg_red_cards = total_red_cards / total_matches_played
+
             # Extrair os campos desejados
             extracted_data = {
                 "form": response_data.get("form", ""),
+                "total_matches_played": home_matches_played + away_matches_played,
                 "total_goals_for": response_data["goals"]["for"]["total"]["total"],
                 "total_goals_against": response_data["goals"]["against"]["total"]["total"],
                 "avg_goals_per_game_home": response_data["goals"]["for"]["average"]["home"],
@@ -323,8 +346,10 @@ def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
                 "win_percentage_home": response_data["fixtures"]["wins"]["home"] / home_matches_played * 100,
                 "win_percentage_away": response_data["fixtures"]["wins"]["away"] / away_matches_played * 100,
                 "clean_sheet_percentage_home": response_data["clean_sheet"]["home"] / home_matches_played * 100,
-                "yellow_cards": response_data["cards"]["yellow"],
-                "red_cards": response_data["cards"]["red"],
+                "total_red_cards": total_red_cards,
+                "red_card_avg": avg_red_cards,
+                "total_yellow_cards": total_yellow_cards,
+                "yellow_card_avg": avg_yellow_cards,
                 "clean_sheet_percentage_away": response_data["clean_sheet"]["away"] / away_matches_played * 100
             }
 
