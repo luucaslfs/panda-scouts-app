@@ -110,3 +110,23 @@ async def update_today_matches_for_all_leagues_endpoint():
         return {"message": "Atualização dos jogos do dia para todas as ligas concluída com sucesso"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/update-week-matches-for-all-leagues")
+async def update_week_matches_for_all_leagues_endpoint(start_date: str, end_date: str):
+    """
+    Inicia a atualização dos jogos da semana para todas as ligas.
+
+    Args:
+        start_date (str): Data de início da semana (no formato YYYY-MM-DD).
+        end_date (str): Data de término da semana (no formato YYYY-MM-DD).
+
+    Returns:
+        dict: Um dicionário com uma mensagem indicando o resultado da atualização.
+    """
+    try:
+        services.update_week_matches_for_all_leagues(start_date, end_date)
+
+        return {"message": "Atualização dos jogos da semana para todas as ligas concluída com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

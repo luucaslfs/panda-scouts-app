@@ -174,6 +174,86 @@ def update_today_matches_in_db(league_id: int, season: int):
         print(f"Erro ao atualizar jogos do dia: {str(e)}")
 
 
+@global_rate_limited
+def update_week_matches_in_db(league_id: int, season: int, start_date: str, end_date: str):
+    """
+    Atualiza os jogos da semana no banco de dados MongoDB para uma liga específica.
+
+    Args:
+    - league_id (int): ID da liga.
+    - season (int): Temporada.
+    - start_date (str): Data de início da semana (no formato YYYY-MM-DD).
+    - end_date (str): Data de término da semana (no formato YYYY-MM-DD).
+
+    Esta função faz uma chamada à API externa para obter os jogos da semana e atualiza
+    o campo "week_matches" na coleção do MongoDB para a liga especificada.
+    """
+    try:
+        conn = http.client.HTTPSConnection("api-football-v1.p.rapidapi.com")
+
+        headers = {
+            'X-RapidAPI-Key': API_FOOTBALL_KEY,
+            'X-RapidAPI-Host': "api-football-v1.p.rapidapi.com"
+        }
+
+        # Define o fuso horário para "America/Sao_Paulo"
+        timezone = "America/Sao_Paulo"
+        status = "NS"
+
+        # Faz a consulta para obter os jogos da semana para a liga e temporada especificadas
+        conn.request(
+            "GET", f"/v3/fixtures?league={league_id}&season={season}&from={start_date}&to={end_date}", headers=headers)
+
+        res = conn.getresponse()
+        data = res.read()
+
+        fixtures_data = json.loads(data.decode("utf-8"))
+
+        # Obtém os jogos da semana
+        # print("Log: Obtendo jogos da semana...")
+        week_matches = fixtures_data.get("response", [])
+        # print(f"Log: {week_matches}")
+
+        # Extrai apenas os campos "fixture" e "teams"
+        extracted_matches = []
+        for match in week_matches:
+            extracted_match = {
+                "fixture": match.get("fixture", {}),
+                "teams": match.get("teams", {})
+            }
+            extracted_matches.append(extracted_match)
+
+        # Atualiza o campo "week_matches" na coleção MongoDB para a liga especificada
+        db_instance.update_week_matches(league_id, season, extracted_matches)
+
+        for match in extracted_matches:
+            home_team_id = match["teams"]["home"]["id"]
+            away_team_id = match["teams"]["away"]["id"]
+            update_team_statistics_in_db(league_id, season, home_team_id)
+            update_team_statistics_in_db(league_id, season, away_team_id)
+
+    except Exception as e:
+        print(f"Erro ao atualizar jogos da semana: {str(e)}")
+
+
+def update_week_matches_for_all_leagues(start_date, end_date):
+    try:
+        # Ler o arquivo leagues.json para obter a lista de ligas
+        with open("leagues.json", "r") as file:
+            leagues = json.load(file)
+
+        # Para cada liga na lista, chame a função para atualizar os jogos da semana
+        for league in leagues:
+            league_id = league["league_id"]
+            season = league["season"]
+            update_week_matches_in_db(league_id, season, start_date, end_date)
+
+        print("Atualização dos jogos da semana para todas as ligas concluída com sucesso")
+    except Exception as e:
+        print(
+            f"Erro ao atualizar jogos da semana para todas as ligas: {str(e)}")
+
+
 def update_today_matches_for_all_leagues():
     try:
         # Ler o arquivo leagues.json para obter a lista de ligas
@@ -232,12 +312,6 @@ def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
         if response_data:
             home_matches_played = response_data["fixtures"]["played"]["home"]
             away_matches_played = response_data["fixtures"]["played"]["away"]
-            yellow_cards = response_data["cards"]["yellow"]
-            avg_yellow_cards_home = sum(yellow_cards.values()) / \
-                home_matches_played if home_matches_played > 0 else 0
-            avg_yellow_cards_away = sum(yellow_cards.values()) / \
-                away_matches_played if away_matches_played > 0 else 0
-
 
             # Extrair os campos desejados
             extracted_data = {
@@ -248,9 +322,9 @@ def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
                 "avg_goals_per_game_away": response_data["goals"]["for"]["average"]["away"],
                 "win_percentage_home": response_data["fixtures"]["wins"]["home"] / home_matches_played * 100,
                 "win_percentage_away": response_data["fixtures"]["wins"]["away"] / away_matches_played * 100,
-                "avg_cards_per_game_home": avg_yellow_cards_home,
-                "avg_cards_per_game_away": avg_yellow_cards_away,
                 "clean_sheet_percentage_home": response_data["clean_sheet"]["home"] / home_matches_played * 100,
+                "yellow_cards": response_data["cards"]["yellow"],
+                "red_cards": response_data["cards"]["red"],
                 "clean_sheet_percentage_away": response_data["clean_sheet"]["away"] / away_matches_played * 100
             }
 

@@ -76,6 +76,44 @@ class MongoDB:
 
         return list(matches)
 
+    def update_week_matches(self, league_id: int, season: int, week_matches: list):
+        """
+        Atualiza os jogos da semana na coleção MongoDB para uma liga específica.
+
+        Args:
+        - league_id (int): ID da liga.
+        - season (int): Temporada.
+        - week_matches (list): Lista de informações completas dos jogos da semana.
+
+        Esta função atualiza os jogos da semana na coleção MongoDB para a liga e temporada especificadas.
+        """
+        query = {"league_info.id": league_id, "league_info.season": season}
+        new_data = {"$set": {"week_matches": week_matches}}
+
+        self.collection.update_one(query, new_data)
+
+    def get_week_matches(self, league_id: int, season: int):
+        """
+        Obtém os jogos da semana para uma liga específica do banco de dados MongoDB.
+
+        Args:
+        - league_id (int): ID da liga.
+        - season (int): Temporada.
+
+        Returns:
+        - list: Uma lista de informações completas dos jogos da semana.
+        """
+        query = {
+            "league_info.id": league_id,
+            "league_info.season": season,
+            "week_matches": {"$exists": True, "$not": {"$size": 0}}
+        }
+
+        projection = {"_id": 0, "week_matches": 1}
+        matches = self.collection.find(query, projection)
+
+        return list(matches)
+
     def update_team_statistics(self, league_id: int, season: int, team_id: int, team_stats: dict):
         query = {"league_info.id": league_id, "league_info.season": season}
         update_query = {
