@@ -148,3 +148,21 @@ async def get_detailed_match_data_endpoint(match_id: int):
         return detailed_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/confrontos-filtrados")
+def obter_confrontos_filtrados(
+    cartoes_min_time: float = Query(..., description="Mínimo de cartões por jogo de um time"),
+    cartoes_min_total: float = Query(..., description="Mínimo de cartões consolidados (time1 + time2)")
+):
+    # Obtenha a lista de confrontos do seu banco de dados
+    confrontos = obter_confrontos_do_banco()  # Substitua com sua lógica para obter os confrontos
+
+    # Aplique os filtros com base nos parâmetros fornecidos
+    confrontos_filtrados_time = filtrar_confrontos_cartoes_time(confrontos, cartoes_min_time)
+    confrontos_filtrados_total = filtrar_confrontos_cartoes_total(confrontos, cartoes_min_total)
+
+    return {
+        "confrontos_filtrados_time": confrontos_filtrados_time,
+        "confrontos_filtrados_total": confrontos_filtrados_total
+    }
