@@ -55,3 +55,4 @@ docs/_build/
 app/data.json
 app/org_data.json
 app/models.py
+.vscode

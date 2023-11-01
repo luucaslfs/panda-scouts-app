@@ -1,8 +1,8 @@
 import json
 import http.client
-import db
+from app import db
 import datetime
-from ratelimit_mecanism import global_rate_limited
+from app.ratelimit_mecanism import global_rate_limited
 from os import getenv
 from dotenv import load_dotenv
 
@@ -357,3 +357,7 @@ def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
             league_id, season, team_id, extracted_data)
     except Exception as e:
         print(f"Erro ao atualizar estatísticas do time: {str(e)}")
+
+
+def get_detailed_match_data(match_id):
+    return db_instance.get_detailed_match_data(match_id)
