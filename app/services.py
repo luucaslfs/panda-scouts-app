@@ -361,3 +361,23 @@ def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
 
 def get_detailed_match_data(match_id):
     return db_instance.get_detailed_match_data(match_id)
+
+
+def filtrar_confrontos_cartoes_time(confrontos, cartoes_min_time):
+    confrontos_filtrados = []
+    for confronto in confrontos:
+        if (confronto['home']['statistics']['yellow_card_avg'] > cartoes_min_time) or
+            (confronto['away']['statistics']['yellow_card_avg'] > cartoes_min_time):
+            confrontos_filtrados.append(confronto)
+    return confrontos_filtrados
+
+def filtrar_confrontos_cartoes_total(confrontos, cartoes_min_total):
+    confrontos_filtrados = []
+    for confronto in confrontos:
+        home_yellow_card_avg = confronto['home']['statistics']['yellow_card_avg']
+        away_yellow_card_avg = confronto['away']['statistics']['yellow_card_avg']
+        total_yellow_card_avg = home_yellow_card_avg + away_yellow_card_avg
+
+        if total_yellow_card_avg > cartoes_min_total:
+            confrontos_filtrados.append(confronto)
+    return confrontos_filtrados
