@@ -50,3 +50,9 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+# Extra stuff:
+app/data.json
+app/org_data.json
+app/models.py
+.vscode

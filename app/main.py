@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from apscheduler.schedulers.background import BackgroundScheduler
 import pytz
 import json
-import services
+from app import services
 
 app = FastAPI()
 
@@ -108,5 +108,43 @@ async def update_today_matches_for_all_leagues_endpoint():
         services.update_today_matches_for_all_leagues()
 
         return {"message": "Atualização dos jogos do dia para todas as ligas concluída com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/update-week-matches-for-all-leagues")
+async def update_week_matches_for_all_leagues_endpoint(start_date: str, end_date: str):
+    """
+    Inicia a atualização dos jogos da semana para todas as ligas.
+
+    Args:
+        start_date (str): Data de início da semana (no formato YYYY-MM-DD).
+        end_date (str): Data de término da semana (no formato YYYY-MM-DD).
+
+    Returns:
+        dict: Um dicionário com uma mensagem indicando o resultado da atualização.
+    """
+    try:
+        services.update_week_matches_for_all_leagues(start_date, end_date)
+
+        return {"message": "Atualização dos jogos da semana para todas as ligas concluída com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/get-detailed-match-data/{match_id}")
+async def get_detailed_match_data_endpoint(match_id: int):
+    """
+    Obtém estatísticas detalhadas de uma partida com base no ID da partida.
+
+    Args:
+        match_id (int): ID da partida.
+
+    Returns:
+        dict: Estatísticas detalhadas da partida.
+    """
+    try:
+        detailed_data = services.get_detailed_match_data(match_id)
+        return detailed_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
