@@ -26,3 +26,24 @@ Aqui, vale explicar melhor o que vai ser implementado, dando exemplos de como no
 ```
 [insira objeto da db]
 ```
+
+### Prompt-3
+```
+Estou criando uma aplicação em FastAPI e voce me ajudará
+
+O objetivo é construir uma api que forneça estatisticas de jogos para sportsbetting.
+Ja estamos armazenando e atualizando as tabelas de diversas ligas, junto com dados de partidas, em uma database mongodb.
+Vamos focar agora no objetivo de [insira objetivo].
+
+Antes de lhe dar maiores instrucoes, vou te explicar melhor como está  a arquitetura da aplicação para que voce faça sugestões mais diretas e assertivas.
+
+main.py:
+endpoints e startup da nossa api
+
+services.py:
+métodos auxiliares, lógica de negócio da nossa aplicação
+
+db.py:
+métodos para interagir com nossa database mongodb usando pymongo
+```
+
