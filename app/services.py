@@ -286,6 +286,21 @@ def get_today_matches_from_db(league_id: int, season: int):
     return db_instance.get_today_matches(league_id, season)
 
 
+def get_week_matches_from_db(league_id: int, season: int):
+    """
+    Obtém os jogos do dia para uma liga específica do banco de dados MongoDB.
+
+    Args:
+    - league_id (int): ID da liga.
+    - season (int): Temporada.
+
+    Returns:
+    - list: Uma lista de informações completas dos jogos do dia.
+    """
+    # Chama o método do banco de dados para obter os jogos do dia
+    return db_instance.get_all_week_matches(league_id, season)
+
+
 @global_rate_limited
 def get_team_statistics(league_id: int, season: int, team_id: int):
     conn = http.client.HTTPSConnection("api-football-v1.p.rapidapi.com")
