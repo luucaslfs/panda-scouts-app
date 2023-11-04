@@ -92,6 +92,26 @@ class MongoDB:
 
         self.collection.update_one(query, new_data)
 
+    def get_all_week_matches(self, season: int):
+        """
+        Obtém os jogos da semana para todas as ligas do banco de dados MongoDB em uma temporada específica.
+
+        Args:
+        - season (int): Temporada.
+
+        Returns:
+        - list: Uma lista de informações completas dos jogos da semana para todas as ligas.
+        """
+        query = {
+            "league_info.season": season,
+            "week_matches": {"$exists": True, "$not": {"$size": 0}}
+        }
+
+        projection = {"_id": 0, "week_matches": 1}
+        matches = self.collection.find(query, projection)
+
+        return list(matches)
+
     def get_week_matches(self, league_id: int, season: int):
         """
         Obtém os jogos da semana para uma liga específica do banco de dados MongoDB.
@@ -187,7 +207,6 @@ class MongoDB:
         away_team = teams.get('away', {})
         home_id = home_team.get('id', 0)
         away_id = away_team.get('id', 0)
-        print(away_id)
 
         # Obtain team statistics using the team IDs
         home_team_stats = self.get_team_stats(home_id)

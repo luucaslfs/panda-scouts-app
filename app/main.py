@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Query, HTTPException
 from apscheduler.schedulers.background import BackgroundScheduler
 import pytz
 import json
@@ -148,3 +148,21 @@ async def get_detailed_match_data_endpoint(match_id: int):
         return detailed_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/confrontos-filtrados")
+def obter_confrontos_filtrados(
+    season: int = Query(...,
+                        description="Temporada dos confrontos"),
+    cartoes_min_por_time: float = Query(...,
+                                        description="Mínimo de média de cartões por jogo de um dos times"),
+    cartoes_media_somada: float = Query(
+        ..., description="Mínimo de média de cartões somada (avg_time1 + avg_time2)")
+):
+
+    confrontos_filtrados = services.filtrar_todos_confrontos(
+        season, cartoes_min_por_time, cartoes_media_somada)
+
+    return {
+        "confrontos_filtrados": confrontos_filtrados
+    }

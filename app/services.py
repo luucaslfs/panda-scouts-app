@@ -286,6 +286,21 @@ def get_today_matches_from_db(league_id: int, season: int):
     return db_instance.get_today_matches(league_id, season)
 
 
+def get_week_matches_from_db(season: int):
+    """
+    Obtém os jogos do dia para uma liga específica do banco de dados MongoDB.
+
+    Args:
+    - league_id (int): ID da liga.
+    - season (int): Temporada.
+
+    Returns:
+    - list: Uma lista de informações completas dos jogos do dia.
+    """
+    # Chama o método do banco de dados para obter os jogos do dia
+    return db_instance.get_all_week_matches(season)
+
+
 @global_rate_limited
 def get_team_statistics(league_id: int, season: int, team_id: int):
     conn = http.client.HTTPSConnection("api-football-v1.p.rapidapi.com")
@@ -361,3 +376,40 @@ def update_team_statistics_in_db(league_id: int, season: int, team_id: int):
 
 def get_detailed_match_data(match_id):
     return db_instance.get_detailed_match_data(match_id)
+
+
+def filtrar_todos_confrontos(season: int, cartoes_min_por_time: float, cartoes_media_somada: float):
+    """
+    Filtra todos os confrontos de todas as ligas em uma temporada com base em estatísticas de cartões.
+
+    Args:
+    - season (int): Temporada.
+    - cartoes_min_time (float): Valor mínimo para média de cartões por time.
+    - cartoes_min_total (float): Valor mínimo para média consolidada de cartões (time1 + time2).
+
+    Returns:
+    - list: Uma lista de informações completas dos jogos da semana filtrados.
+    """
+    all_week_matches = db_instance.get_all_week_matches(season)
+    confrontos_filtrados = []
+
+    for week_matches in all_week_matches:
+        for confronto in week_matches['week_matches']:
+            confronto = db_instance.get_detailed_match_data(
+                confronto['fixture']['id'])
+            home_yellow_card_avg = confronto['home']['statistics'].get(
+                'yellow_card_avg', 0.0)
+            away_yellow_card_avg = confronto['away']['statistics'].get(
+                'yellow_card_avg', 0.0)
+
+            if (home_yellow_card_avg > cartoes_min_por_time or
+                    away_yellow_card_avg > cartoes_min_por_time):
+                confrontos_filtrados.append(confronto)
+            else:
+
+                total_yellow_card_avg = home_yellow_card_avg + away_yellow_card_avg
+
+                if total_yellow_card_avg > cartoes_media_somada:
+                    confrontos_filtrados.append(confronto)
+
+    return confrontos_filtrados
