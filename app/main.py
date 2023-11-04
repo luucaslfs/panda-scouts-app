@@ -152,19 +152,17 @@ async def get_detailed_match_data_endpoint(match_id: int):
 
 @app.get("/confrontos-filtrados")
 def obter_confrontos_filtrados(
-    cartoes_min_time: float = Query(...,
-                                    description="Mínimo de cartões por jogo de um time"),
-    cartoes_min_total: float = Query(
-        ..., description="Mínimo de cartões consolidados (time1 + time2)")
+    season: int = Query(...,
+                        description="Temporada dos confrontos"),
+    cartoes_min_por_time: float = Query(...,
+                                        description="Mínimo de média de cartões por jogo de um dos times"),
+    cartoes_media_somada: float = Query(
+        ..., description="Mínimo de média de cartões somada (avg_time1 + avg_time2)")
 ):
-    confrontos = services.get_week_matches_from_db()
 
-    confrontos_filtrados_cpt = services.filtrar_confrontos_cartoes_time(
-        confrontos, cartoes_min_time)
-    confrontos_filtrados_ctotal = services.filtrar_confrontos_cartoes_total(
-        confrontos, cartoes_min_total)
+    confrontos_filtrados = services.filtrar_todos_confrontos(
+        season, cartoes_min_por_time, cartoes_media_somada)
 
     return {
-        "h2h_filtered_by_cardsperteam": confrontos_filtrados_cpt,
-        "h2h_filtered_by_cardstotal": confrontos_filtrados_ctotal
+        "confrontos_filtrados": confrontos_filtrados
     }
