@@ -207,7 +207,6 @@ class MongoDB:
         away_team = teams.get('away', {})
         home_id = home_team.get('id', 0)
         away_id = away_team.get('id', 0)
-        print(away_id)
 
         # Obtain team statistics using the team IDs
         home_team_stats = self.get_team_stats(home_id)
