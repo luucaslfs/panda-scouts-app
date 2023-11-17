@@ -1,8 +1,7 @@
 import logging
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CallbackContext, CommandHandler, MessageHandler, filters
-from handlers.command_handlers import handle_get_match_data  # Importe os manipuladores de comando necessários
-from handlers.message_handlers import handle_text_message, handle_match_data_request  # Importe os manipuladores de mensagem necessários
+from handlers.command_handlers import handle_get_match_data, handle_quartil, handle_filtered_matches
 from dotenv import load_dotenv
 from os import getenv
 
@@ -16,14 +15,16 @@ application = Application.builder().token(token).build()
 
 # Adição dos manipuladores de comando
 application.add_handler(CommandHandler("getmatchdata", handle_get_match_data, has_args=True))
-
-# Adição dos manipuladores de mensagem
-application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
-application.add_handler(MessageHandler(filters.Regex(r'/getmatchdata (\d+)'), handle_match_data_request))
+application.add_handler(CommandHandler("filtered_matches", handle_filtered_matches))
+application.add_handler(CommandHandler("quartil", handle_quartil))
 
 # Adição do teclado personalizado
-keyboard = [["/getmatchdata"],
-            ["/help"]]
+keyboard = [["./getmatchdata {id da partida} - Obter dados da partida"],
+            ["/quartil - Obter partidas de primeiros vs ultimos"],
+            ["/filtered_matches - Obter partidas filtradas por medias de cartoes por jogo"],]
+            
+
+            
 
 reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -31,7 +32,7 @@ async def start(update: Update, context: CallbackContext) -> None:
     """Enviar mensagem inicial com o teclado personalizado."""
     user = update.effective_user
     await update.message.reply_html(
-        rf"Oi {user.mention_html()}! Como posso ajudar?",
+        rf"Oi {user.mention_html()}! Sou um bot de Scouts de apostas esportivas. Como posso ajudar?",
         reply_markup=reply_markup,
     )
 
