@@ -78,12 +78,12 @@ def fetch_standings_data(league_id: int, season: int) -> dict:
     return db_instance.get_standings_data(league_id, season)
 
 
-def filter_quartile_matches(today_matches: list, standings_data: dict) -> list:
+def filter_quartile_matches(matches: list, standings_data: dict) -> list:
     """
-    Filtra os jogos do dia com base nas classificações das equipes.
+    Filtra os jogos a partir de uma lista com base nas classificações das equipes.
 
     Args:
-    - today_matches (list): Lista de informações completas dos jogos do dia.
+    - matches (list): Lista de jogos com informações completas.
     - standings_data (dict): Dados de classificação da liga.
 
     Returns:
@@ -93,15 +93,21 @@ def filter_quartile_matches(today_matches: list, standings_data: dict) -> list:
 
     quartile_matches = []
 
-    for match in today_matches:
+    for match in matches:
         home_team_id = match["teams"]["home"]["id"]
         away_team_id = match["teams"]["away"]["id"]
+        match = db_instance.get_detailed_match_data(
+                match['fixture']['id'])
 
         # Encontre as classificações das equipes
         home_team_rank = next(
             (team["rank"] for team in standings_data["standings"] if team["team_id"] == home_team_id), None)
         away_team_rank = next(
             (team["rank"] for team in standings_data["standings"] if team["team_id"] == away_team_id), None)
+            
+        match['league_info'] = standings_data['league_info']
+        match['home']['team_rank'] = home_team_rank
+        match['away']['team_rank'] = away_team_rank
 
         # Verifique se ambas as equipes estão no primeiro ou no último quartil
         if home_team_rank is not None and away_team_rank is not None:
@@ -288,7 +294,7 @@ def get_today_matches_from_db(league_id: int, season: int):
 
 def get_week_matches_from_db(season: int):
     """
-    Obtém os jogos do dia para uma liga específica do banco de dados MongoDB.
+    Obtém os jogos da semana para uma liga específica do banco de dados MongoDB.
 
     Args:
     - league_id (int): ID da liga.
