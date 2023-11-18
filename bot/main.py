@@ -19,12 +19,8 @@ application.add_handler(CommandHandler("filtered_matches", handle_filtered_match
 application.add_handler(CommandHandler("quartil", handle_quartil))
 
 # Adição do teclado personalizado
-keyboard = [["./getmatchdata {id da partida} - Obter dados da partida"],
-            ["/quartil - Obter partidas de primeiros vs ultimos"],
-            ["/filtered_matches - Obter partidas filtradas por medias de cartoes por jogo"],]
-            
-
-            
+keyboard = [["🎌 /quartil - Obter partidas de primeiros colocados vs ultimos colocados"],
+            ["🪶 /filtered_matches - Partidas filtradas por estatísticas personalizadas"],]
 
 reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -32,7 +28,7 @@ async def start(update: Update, context: CallbackContext) -> None:
     """Enviar mensagem inicial com o teclado personalizado."""
     user = update.effective_user
     await update.message.reply_html(
-        rf"Oi {user.mention_html()}! Sou um bot de Scouts de apostas esportivas. Como posso ajudar?",
+        rf"Oi {user.mention_html()}, tudo na 🕊️ paz meu 🫅 nobre? Sou um 🧑‍💻 assistente de apostas esportivas 🕵🏼.\nComo posso ajudar 🫵🏼 você hoje?",
         reply_markup=reply_markup,
     )
 
