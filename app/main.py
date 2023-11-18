@@ -87,7 +87,7 @@ async def get_today_quartile_matches(league_id: int, season: int):
     """
     try:
         standings_data = services.fetch_standings_data(league_id, season)
-        today_matches = services.get_today_matches_from_db(league_id)
+        today_matches = services.get_today_matches_from_db(league_id, season)
         quartile_matches = services.filter_quartile_matches(
             today_matches, standings_data)
 
@@ -95,6 +95,43 @@ async def get_today_quartile_matches(league_id: int, season: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/weekly-quartile-matches/")
+async def get_weekly_quartile_matches():
+    """
+    Obtém, dentre todas as ligas, os jogos da semana que correspondem aos critérios do quartil
+    com base nas classificações das equipes.
+
+    Returns:
+        dict: Um dicionário contendo a lista de jogos que atendem aos critérios.
+    """
+    try:
+        with open("app/leagues.json", "r") as file:
+            leagues = json.load(file)
+
+        week_matches = services.get_week_matches_from_db(2023)
+        weekly_quartile_matches = []
+
+        def find_matches_by_league_id(league_id):
+            for league in week_matches:
+                if league['league_info']['id'] == league_id:
+                    return league
+            return None
+
+        for league in leagues:
+            league_id = league["league_id"]
+            season = league["season"]
+            league_week_matches = find_matches_by_league_id(league_id)
+            if league_week_matches is None:
+                continue
+            league_week_matches = find_matches_by_league_id(league_id)['week_matches']
+            standings_data = services.fetch_standings_data(league_id, season)
+            quartile_matches = services.filter_quartile_matches(league_week_matches, standings_data)
+
+            weekly_quartile_matches.extend(quartile_matches)
+
+        return {"matches": weekly_quartile_matches}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/update-today-matches-for-all-leagues")
 async def update_today_matches_for_all_leagues_endpoint():

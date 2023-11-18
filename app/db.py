@@ -107,7 +107,7 @@ class MongoDB:
             "week_matches": {"$exists": True, "$not": {"$size": 0}}
         }
 
-        projection = {"_id": 0, "week_matches": 1}
+        projection = {"_id": 0, "week_matches": 1, "league_info.id": 1}
         matches = self.collection.find(query, projection)
 
         return list(matches)
