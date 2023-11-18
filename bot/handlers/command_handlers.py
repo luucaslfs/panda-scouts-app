@@ -102,8 +102,8 @@ def format_match_data(match_data):
     home_win_percentage = home_team["statistics"].get("win_percentage_home", "N/A")
     away_win_percentage = away_team["statistics"].get("win_percentage_away", "N/A")
 
-    home_team_rank = home_team.get("team_rank")
-    away_team_rank = away_team.get("team_rank")
+    home_team_rank = home_team.get("team_rank", "N/A")
+    away_team_rank = away_team.get("team_rank", "N/A")
 
     formatted_text = (
         f"🏟 Dados da Partida 🏟\n"
